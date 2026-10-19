@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792057428562,
+      "tag": "0000_gas_distribution_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792112150702,
+      "tag": "0001_gas_tighten_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792368386424,
+      "tag": "0002_block_duplicate_recipients",
+      "breakpoints": true
+    }
+  ]
+}

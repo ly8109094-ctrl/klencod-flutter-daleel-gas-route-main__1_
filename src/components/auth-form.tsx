@@ -1,0 +1,18 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
+import { Btn, Card, Field } from './ui-kit';
+import { useStore } from '@/lib/store';
+import { logoUrl, developerHeader } from '@/lib/brand';
+export function AuthForm({admin=false}:{admin?:boolean}){
+ const [mode,setMode]=useState<'login'|'signup'|'reset'>('login');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [name,setName]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);
+ const {refresh,session}=useStore();const go=useNavigate();
+ useEffect(()=>{if(session.factory)go({to:'/factory'});else if(session.agentId)go({to:'/agent'});},[session.factory,session.agentId,go]);
+ async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setMessage('');try{
+ if(mode==='reset'){setMessage('يرجى مراجعة مدير المصنع لتزويدك بكلمة سر مؤقتة للدخول، ثم غيّرها من حسابك فور الدخول.');}
+ else if(mode==='signup'){const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin,data:{display_name:name}}});if(error)throw error;setMessage('راجع بريدك لتأكيد الحساب؛ سيحتاج الوكيل إلى ربط حسابه بواسطة المدير.');}
+ else{const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;await refresh();setMessage('تم الدخول؛ إن لم تُفتح البوابة فتواصل مع المدير لتفعيل صلاحيات حسابك.');}
+ }catch(e){setMessage(e instanceof Error?e.message:'تعذر تسجيل الدخول');}finally{setBusy(false);}}
+ return <div className="min-h-screen bg-background"><div className="bg-primary px-4 py-3 text-center text-sm text-primary-foreground">{developerHeader}</div><div className="mx-auto max-w-sm px-4 py-8"><img src={logoUrl} alt="دليل الغاز الحصن" className="mx-auto mb-5 h-32 w-32 object-contain"/><Card><h1 className="mb-5 text-center text-xl font-bold">{admin?'دخول المدير':'دخول الوكيل'}</h1><form onSubmit={submit} className="space-y-3">{mode==='signup'&&<Field label="الاسم" value={name} onChange={e=>setName(e.target.value)} required/>}<Field label="البريد الإلكتروني" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>{mode!=='reset'&&<Field label="كلمة المرور" type="password" minLength={8} value={password} onChange={e=>setPassword(e.target.value)} required/>}<Btn type="submit" disabled={busy} className="w-full">{busy?'جارٍ الإرسال…':mode==='signup'?'إنشاء حساب':mode==='reset'?'إرسال رابط الاستعادة':'دخول'}</Btn></form><Btn variant="outline" className="mt-3 w-full" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await lovable.auth.signInWithOAuth('google',{redirect_uri:window.location.origin});if(r.error)throw r.error;if(!r.redirected)await refresh();}catch(e){setMessage(e instanceof Error?e.message:'تعذر الدخول');}finally{setBusy(false);}}}>الدخول باستخدام Google</Btn><div className="mt-3 flex flex-wrap gap-2"><Btn variant="ghost" onClick={()=>setMode(mode==='signup'?'login':'signup')}>{mode==='signup'?'لدي حساب':'إنشاء حساب'}</Btn><Btn variant="ghost" onClick={()=>{setMode('login');setMessage('يرجى مراجعة مدير المصنع لتزويدك بكلمة سر مؤقتة للدخول، ثم غيّرها من حسابك فور الدخول.');}}>نسيت كلمة المرور</Btn></div>{session.userId&&!session.factory&&!session.agentId&&<Btn variant="outline" onClick={async()=>{await supabase.auth.signOut();await refresh();}}>تسجيل الخروج</Btn>}{message&&<p role="status" className="mt-3 text-sm">{message}</p>}</Card><Link to="/public" className="mt-5 block text-center text-primary">البوابة العامة</Link></div></div>;
+}

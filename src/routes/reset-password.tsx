@@ -1,0 +1,7 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {useEffect,useState} from 'react';
+import {supabase} from '@/integrations/supabase/client';
+import {Btn,Card,Field} from '@/components/ui-kit';
+import {meta} from '@/lib/meta';
+export const Route=createFileRoute('/reset-password')({head:()=>meta('تعيين كلمة المرور','استعادة حساب دليل الغاز الحصن'),component:ResetPassword});
+function ResetPassword(){const [ready,setReady]=useState(false);const [password,setPassword]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);useEffect(()=>{const recovery=new URLSearchParams(window.location.hash.slice(1)).get('type')==='recovery';supabase.auth.getUser().then(({data})=>setReady(recovery&&!!data.user));},[]);return <div className="mx-auto max-w-sm px-4 py-10"><Card><h1 className="mb-4 text-xl font-bold">كلمة مرور جديدة</h1>{ready?<form className="space-y-3" onSubmit={async e=>{e.preventDefault();setBusy(true);const {error}=await supabase.auth.updateUser({password});setMessage(error?.message??'تم تحديث كلمة المرور');setBusy(false);}}><Field label="كلمة المرور الجديدة" type="password" minLength={8} required value={password} onChange={e=>setPassword(e.target.value)}/><Btn type="submit" disabled={busy}>حفظ كلمة المرور</Btn></form>:<p>افتح رابط الاستعادة المرسل إلى بريدك.</p>}{message&&<p role="status" className="mt-3">{message}</p>}</Card></div>;}
